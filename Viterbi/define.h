@@ -8,6 +8,6 @@
 #define DIFF_FILE_NAME             "diff.txt"
 
 
-#define N_STATES  5
+#define N_STATES  64
 #define N_OBS     140
-#define N_TOKENS  5
+#define N_TOKENS  64

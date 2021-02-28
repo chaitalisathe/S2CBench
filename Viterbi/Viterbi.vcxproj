@@ -150,7 +150,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tb_viterbi.cpp" />
-    <ClCompile Include="Viterbi.cpp" />
+    <ClCompile Include="viterbi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="define.h" />

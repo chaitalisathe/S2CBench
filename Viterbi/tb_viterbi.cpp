@@ -20,34 +20,17 @@ void tb_viterbi::send() {
     float* transmission_read = new float[N_STATES * N_STATES];
     float* emission_read = new float[N_STATES * N_TOKENS];
 
-    //sc_signal<sc_uint<8>>* indata_obs = new sc_signal<sc_uint<8>>[N_OBS];
     //Reset routine
-    std::ifstream   inFile1(IN_FILE_NAME);
+    std::ifstream   inFile(IN_FILE_NAME);
 
-    if (!inFile1) {
+    if (!inFile) {
         cout << "Could not open " << IN_FILE_NAME << "\n";
         sc_stop();
         exit(-1);
     }
-    wait();
-  //  while (true) {
-
-
-        std::ifstream inFile(IN_FILE_NAME);
-
         std::string data;
 
         int type = 0;
-
-        in_valid.write(1);
-        wait();
-        
-
-        while (!in_ready.read())
-        {
-            wait();
-        }
-
 
 
         while (!inFile.eof()) {
@@ -66,58 +49,41 @@ void tb_viterbi::send() {
                 }
 
                 if (type == 2 && i < N_STATES) {
-                    init_read[i] = std::stod(data);
+                    init_read[i] = std::stof(data);
                     indata_init[i].write(init_read[i]);
                 }
 
                 if (type == 3 && i < N_STATES * N_STATES) {
-                    transmission_read[i] = std::stod(data);
+                    transmission_read[i] = std::stof(data);
                     indata_transition[i].write(transmission_read[i]);
                 }
 
                 if (type == 4 && i < N_STATES * N_TOKENS) {
-                    emission_read[i] = std::stod(data);
+                    emission_read[i] = std::stof(data);
                     indata_emission[i].write(emission_read[i]);
                 }
                 
                 i++;
-                wait();
                 
             }
             
         }
+
         inFile.close();
 
+        wait();
 
-
-        /*       for (i = 0; i < N_OBS; i++) {
-                   indata_obs[i].write(obs_read[i]);
-               }
-
-               for (i = 0; i < N_STATES; i++) {
-                   indata_init[i].write(init_read[i]);
-               }
-
-               for (i = 0; i < N_STATES; i++) {
-                   for (j = 0; j < N_STATES; j++) {
-                       indata_transition[i * N_STATES + j].write(transmission_read[i * N_STATES + j]);
-                   }
-               }
-
-               for (i = 0; i < N_STATES; i++) {
-                   for (j = 0; j < N_TOKENS; j++) {
-                       indata_emission[i * N_TOKENS + j].write(emission_read[i * N_TOKENS + j]);
-                   }
-               }
-               wait();*/
-               //}
         cout << endl << "Starting comparing results " << endl;
 
       compare_results();
         sc_stop();
 
         wait();
- //   }
+
+        delete[] obs_read;
+        delete[] init_read;
+        delete[] transmission_read;
+        delete[] emission_read;
 }
 
 
@@ -135,7 +101,7 @@ void tb_viterbi::recv() {
     int i;
 
     //std::ifstream out_viterbi_file(OUT_FILE_NAME,"wt");
-    out_viterbi_file = fopen(OUT_FILE_NAME, "wt");
+    std::ofstream out_viterbi_file(OUT_FILE_NAME);
 
     if (!out_viterbi_file) {
         cout << "Could not open " << OUT_FILE_NAME << "\n";
@@ -143,26 +109,22 @@ void tb_viterbi::recv() {
         exit(-1);
     }
 
-
-
-while (!out_valid.read())
-{ 
-    wait(); 
-}
-
-
-out_ready.write(1);
+    wait();
 
     while (true)
     {
         for (i = 0; i < N_OBS; i++) {
             viterbi_out_write[i] = viterbi_output[i].read();
-
-       
-            fprintf(out_viterbi_file, "%p",viterbi_out_write);
         }
-        
+
+        for (i = 0; i < N_OBS; i++) {
+            out_viterbi_file << viterbi_out_write[i] << std::endl;
+        }
+
+        wait();
     }
+
+    out_viterbi_file.close();
 
 }
 
@@ -175,13 +137,10 @@ void tb_viterbi::compare_results() {
     unsigned int outviterbi [N_OBS], outviterbi_golden[N_OBS];
         int line = 1, errors = 0;
 
-    // Close file where outputs are stored
-    fclose(out_viterbi_file);
-
     // Open results file
-    out_viterbi_file = fopen(OUT_FILE_NAME, "rt");
+        std::ifstream   outfile(OUT_FILE_NAME);
 
-    if (!out_viterbi_file) {
+    if (!outfile) {
         cout << "Could not open " << OUT_FILE_NAME << endl;
         sc_stop();
         exit(-1);
@@ -190,8 +149,8 @@ void tb_viterbi::compare_results() {
     //
     //Load the golden output from file
     //
-    out_viterbi_golden_file = fopen(OUT_FILE_NAME_GOLDEN, "rt");
-    if (!out_viterbi_golden_file) {
+    std::ifstream  goldfile(OUT_FILE_NAME_GOLDEN);
+    if (!goldfile) {
         cout << "Could not open " << OUT_FILE_NAME_GOLDEN << endl;
         sc_stop();
         exit(-1);
@@ -201,7 +160,7 @@ void tb_viterbi::compare_results() {
     // comparison result with golden output
     //
 
-    diff_file = fopen(DIFF_FILE_NAME, "w");
+    std::ofstream diff_file (DIFF_FILE_NAME);
     if(!diff_file) {
         cout << "Could not open " << DIFF_FILE_NAME << "\n";
         sc_stop();
@@ -227,8 +186,8 @@ void tb_viterbi::compare_results() {
 
     //}
 
+    diff_file.close();
 
-    std::ifstream   outfile(OUT_FILE_NAME);
     std::string data1;
 
     int type = 0, i = 0;
@@ -250,7 +209,7 @@ void tb_viterbi::compare_results() {
     outfile.close();
 
 
-    std::ifstream  goldfile(OUT_FILE_NAME_GOLDEN);
+    
     std::string data2;
 
     type = 0;
@@ -282,13 +241,5 @@ void tb_viterbi::compare_results() {
         cout << endl << "Finished simulation SUCCESSFULLY" << endl;
     else
         cout << endl << "Finished simulation " << errors << " MISSMATCHES between Golden and Simulation" << endl;
-
-
-    fclose(out_viterbi_file);
-    fclose(diff_file);
-    fclose(out_viterbi_golden_file);
-
-
-
 }
 

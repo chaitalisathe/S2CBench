@@ -14,32 +14,24 @@
 #include <stdio.h>
 #include <string>
 
-
-
-
 SC_MODULE(tb_viterbi) {
 
 	// Inputs
 	sc_in<bool>          clk;
 	sc_in<bool>          rst;
-	sc_out<bool>         in_valid;
-	sc_in<bool>         out_valid;
-	sc_out<bool>         out_ready;
-	sc_in<bool>         in_ready;
-	sc_in<sc_uint<8> > viterbi_output[N_OBS];
+	
+	sc_in<sc_uint<8> > * viterbi_output;
 	
 
 	// Outputs
-	sc_out<sc_uint<8>> 	indata_obs[N_OBS]; // observation vector  // observation vector 
-	sc_out<float>	indata_init[N_STATES];// initial state probabilities		  
-	sc_out<float>   indata_transition[N_STATES * N_STATES];// transition matrix
-	sc_out<float>   indata_emission[N_STATES * N_TOKENS];// emission matrix
+	sc_out<sc_uint<8>>* 	indata_obs; // observation vector  // observation vector 
+	sc_out<float>*	indata_init;// initial state probabilities		  
+	sc_out<float> *  indata_transition;// transition matrix
+	sc_out<float> *  indata_emission;// emission matrix
 	
 
 
 //File pointers
-	FILE* in_viterbi_file, * out_viterbi_golden_file, * out_viterbi_file_read;
-	FILE* out_viterbi_file, * diff_file;
 
 
 	/* C */
@@ -54,6 +46,13 @@ SC_MODULE(tb_viterbi) {
 
 	SC_CTOR(tb_viterbi) {
 
+		viterbi_output = new sc_in<sc_uint<8> >[N_OBS];
+
+		indata_obs = new sc_out<sc_uint<8>>[N_OBS]; // observation vector  // observation vector 
+		indata_init = new sc_out<float>[N_STATES];// initial state probabilities		  
+		indata_transition = new sc_out<float>[N_STATES * N_STATES];// transition matrix
+		indata_emission = new sc_out<float>[N_STATES * N_TOKENS];// emission matrix
+
 		SC_CTHREAD(send, clk.pos());
 		reset_signal_is(rst, false);
 
@@ -61,8 +60,14 @@ SC_MODULE(tb_viterbi) {
 		reset_signal_is(rst, false);
 	}
 
-	~tb_viterbi() {}
+	~tb_viterbi() {
 
+		delete[] indata_obs;
+		delete[] indata_init;
+		delete[] indata_transition;
+		delete[] indata_emission;
+	}
+	
 };
 
 
