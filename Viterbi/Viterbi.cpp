@@ -10,11 +10,11 @@ void viterbi::viterbi_main() {
     int	t;
     int	prev, curr;
     int	min_s, s;
-    sc_uint<8>* obs = new sc_uint<8>[N_OBS]; // observation vector 
+    unsigned int* obs = new unsigned int[N_OBS]; // observation vector 
     float* init = new float[N_STATES];//	init[N_STATES];// initial state probabilities		  
     float* transition = new float[N_STATES * N_STATES];// transition matrix
     float* emission = new float[N_STATES * N_TOKENS];// emission matrix
-    sc_uint<8>* path = new sc_uint<8>[N_OBS];
+    unsigned int* path = new unsigned int[N_OBS];
     int i, j;
 
     // All probabilities are in -log space. (i.e.: P(x) => -log(P(x)) )
@@ -24,8 +24,9 @@ void viterbi::viterbi_main() {
     wait();
 
     // Main thread	
-    while (1) {
+    while (true) {
 
+        sanity_check.write(sc_uint<8>(13));
 
         // =================read all inputs
 
@@ -114,8 +115,15 @@ path[t] = min_s;
 //======= write output to the port viterbi_output.write(path) ; 
 for (i = 0; i < N_OBS; i++) {
     viterbi_output[i].write(path[i]);
-    wait();
 }
+
+std::ofstream out_log(OUT_LOG);
+
+for (i = 0; i < N_OBS; i++) {
+    out_log << path[i] << std::endl;
+}
+
+out_log.close();
 
 wait();
 

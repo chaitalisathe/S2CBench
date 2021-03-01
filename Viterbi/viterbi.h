@@ -17,6 +17,8 @@ public:
     sc_in<float>* indata_transition;// transition matrix
     sc_in<float>* indata_emission;// emission matrix
 
+    sc_out<sc_uint<8>> sanity_check;
+
 
    // output  
     sc_out<sc_uint<8>>* viterbi_output; // most likely state chain

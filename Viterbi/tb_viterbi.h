@@ -19,6 +19,8 @@ SC_MODULE(tb_viterbi) {
 	// Inputs
 	sc_in<bool>          clk;
 	sc_in<bool>          rst;
+
+	sc_in<sc_uint<8>> sanity_check;
 	
 	sc_in<sc_uint<8> > * viterbi_output;
 	
@@ -66,6 +68,7 @@ SC_MODULE(tb_viterbi) {
 		delete[] indata_init;
 		delete[] indata_transition;
 		delete[] indata_emission;
+		delete[] viterbi_output;
 	}
 	
 };

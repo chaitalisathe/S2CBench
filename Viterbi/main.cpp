@@ -26,12 +26,17 @@ int sc_main(int argc, char* argv[])
   sc_signal<sc_uint<8>>*  viterbi_output = new sc_signal<sc_uint<8>>[N_OBS]; // most likely state chain
   int i, j;
 
+  sc_signal<sc_uint<8>> sanity_check;
+
   viterbi * u_viterbi = new viterbi("viterbi");
   tb_viterbi * test = new tb_viterbi("tb_viterbi");
 
   //connect to  module
   u_viterbi->clk(*clk);
   u_viterbi->rst(*rst);
+
+  u_viterbi->sanity_check(sanity_check);
+  test->sanity_check(sanity_check);
 
   for (i = 0; i < N_OBS; i++) {
       u_viterbi->indata_obs[i](indata_obs[i]);

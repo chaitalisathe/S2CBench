@@ -28,6 +28,9 @@ void tb_viterbi::send() {
         sc_stop();
         exit(-1);
     }
+
+    while (true) {
+
         std::string data;
 
         int type = 0;
@@ -44,7 +47,7 @@ void tb_viterbi::send() {
             else {
                 if (type == 1 && i < N_OBS) {
                     obs_read[i] = std::stoi(data);
-            
+
                     indata_obs[i].write(obs_read[i]);
                 }
 
@@ -62,11 +65,11 @@ void tb_viterbi::send() {
                     emission_read[i] = std::stof(data);
                     indata_emission[i].write(emission_read[i]);
                 }
-                
+
                 i++;
-                
+
             }
-            
+
         }
 
         inFile.close();
@@ -75,15 +78,16 @@ void tb_viterbi::send() {
 
         cout << endl << "Starting comparing results " << endl;
 
-      compare_results();
+        compare_results();
         sc_stop();
 
         wait();
+    }
 
-        delete[] obs_read;
-        delete[] init_read;
-        delete[] transmission_read;
-        delete[] emission_read;
+    delete[] obs_read;
+    delete[] init_read;
+    delete[] transmission_read;
+    delete[] emission_read;
 }
 
 
@@ -97,7 +101,7 @@ void tb_viterbi::send() {
 void tb_viterbi::recv() {
 
     // Variables declaration
-    sc_uint<8>* viterbi_out_write= new sc_uint<8>[N_OBS];
+    unsigned int* viterbi_out_write= new unsigned int[N_OBS];
     int i;
 
     //std::ifstream out_viterbi_file(OUT_FILE_NAME,"wt");
@@ -121,11 +125,12 @@ void tb_viterbi::recv() {
             out_viterbi_file << viterbi_out_write[i] << std::endl;
         }
 
+        out_viterbi_file.close();
+
         wait();
     }
 
-    out_viterbi_file.close();
-
+    delete[] viterbi_out_write;
 }
 
 
