@@ -121,7 +121,7 @@ void tb_viterbi::recv() {
         {
             wait();
             viterbi_out_write[i] = viterbi_output[i].read();
-            std::cout << viterbi_out_write[i] << "\t";
+           // std::cout << viterbi_out_write[i] << "\t";
 
             out_viterbi_file << viterbi_out_write[i] << std::endl;
             i++;
@@ -145,15 +145,17 @@ void tb_viterbi::recv() {
 //--------------------------------
 void tb_viterbi::compare_results() {
 
-    int outviterbi [N_OBS], outviterbi_golden[N_OBS];
-        int line = 1, errors = 0;
+    //int outviterbi [N_OBS], outviterbi_golden[N_OBS];
+    unsigned int* outviterbi = new unsigned int[N_OBS];
+    unsigned int* outviterbi_golden = new unsigned int[N_OBS];
+    int line = 1, errors = 0;
 
-     
+
 
     // Open results file
-        outfile.close();
+    outfile.close();
 
-        outfile.open(OUT_FILE_NAME);
+    outfile.open(OUT_FILE_NAME);
 
     if (!outfile) {
         cout << "Could not open " << OUT_FILE_NAME << endl;
@@ -175,31 +177,13 @@ void tb_viterbi::compare_results() {
     // comparison result with golden output
     //
 
-    std::ofstream diff_file (DIFF_FILE_NAME);
-    if(!diff_file) {
+    std::ofstream diff_file(DIFF_FILE_NAME);
+    if (!diff_file) {
         cout << "Could not open " << DIFF_FILE_NAME << "\n";
         sc_stop();
         exit(-1);
     }
 
-    //while (fscanf(out_viterbi_golden_file, "%i", &outviterbi_golden) != EOF) {
-    //    fscanf(out_viterbi_file, "%i", &outviterbi);
-
-
-    //   // cout << endl << "Cycle[" << line << "]: " << outviterbi_golden << "-- " << outviterbi;
-
-
-    //    if (outviterbi != outviterbi_golden) {
-    //        cout << "\nOutput missmatch [line:" << line << "] Golden:" << outviterbi_golden << " -- Output:" << outviterbi;
-
-    //        fprintf(diff_file, "\nOutput missmatch[line:%i] Golden: %i -- Output: %i", line, outviterbi_golden, outviterbi);
-
-    //        errors++;
-    //    }
-
-    //    line++;
-
-    //}
     int w = 0;
     while (w < N_OBS)
     {
@@ -207,22 +191,22 @@ void tb_viterbi::compare_results() {
         wait();
     }
 
-    diff_file.close();
+    //diff_file.close();
 
     std::string data1;
 
-   int i = 0;
+    int i = 0;
 
     while (!outfile.eof()) {
         outfile >> data1;
-                outviterbi[i++] = std::stoi(data1);
-            
-        }
-    
+        outviterbi[i++] = std::stoi(data1);
+
+    }
+
     outfile.close();
 
 
-    
+
     std::string data2;
 
     int type = 0;
@@ -244,15 +228,28 @@ void tb_viterbi::compare_results() {
     }
     goldfile.close();
 
-    for (i = 0; i < N_OBS; i++) {
+    cout << "output" << "---" << "Golden output" << std::endl;
+    for (i = 0; i < N_OBS; i++)
+    {
+        cout << outviterbi[i] << "---" << outviterbi_golden[i] << std::endl;
         if (outviterbi_golden[i] != outviterbi[i]) {
-        errors++;
-    }
-    }
+            errors++;
+            diff_file << outviterbi[i] << "---" << outviterbi_golden[i] << std::endl;
+        }
 
-    if (errors == 0)
-        cout << endl << "Finished simulation SUCCESSFULLY" << endl;
+    }
+    
+
+    if (errors == 0) {
+    cout << endl << "Finished simulation SUCCESSFULLY" << endl;
+    
+    }
     else
+    {
         cout << endl << "Finished simulation " << errors << " MISSMATCHES between Golden and Simulation" << endl;
+        
+       
+    }
+    diff_file.close();
 }
 
