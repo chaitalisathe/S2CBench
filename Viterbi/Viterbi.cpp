@@ -26,8 +26,6 @@ void viterbi::viterbi_main() {
     // Main thread	
     while (true) {
 
-        sanity_check.write(sc_uint<8>(13));
-
         // =================read all inputs
 
         for (i = 0; i < N_OBS; i++) {
@@ -113,8 +111,11 @@ path[t] = min_s;
 
 
 //======= write output to the port viterbi_output.write(path) ; 
-for (i = 0; i < N_OBS; i++) {
+i = 0;
+while (i < N_OBS) {
     viterbi_output[i].write(path[i]);
+    wait();
+    i++;
 }
 
 std::ofstream out_log(OUT_LOG);
@@ -125,15 +126,15 @@ for (i = 0; i < N_OBS; i++) {
 
 out_log.close();
 
+delete[] init;
+delete[] transition;
+delete[] emission;
+delete[] llike;
+delete[] obs;
+delete[] path;
+
 wait();
 
 
     }
-
-    delete[] init;
-    delete[] transition;
-    delete[] emission;
-    delete[] llike;
-    delete[] obs;
-    delete[] path;
 }

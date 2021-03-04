@@ -11,8 +11,6 @@
 //--------------------------
 void tb_viterbi::send() {
 
-
-
     // Variables declaration
     int i, j = 0;
     unsigned int* obs_read = new unsigned int[N_OBS];
@@ -69,30 +67,32 @@ void tb_viterbi::send() {
                 i++;
 
             }
+          
 
         }
-
+        wait();
         inFile.close();
 
-        wait();
-
+        
         cout << endl << "Starting comparing results " << endl;
 
         compare_results();
-        sc_stop();
 
+
+
+        sc_stop();
         wait();
+
+
     }
+
+   
 
     delete[] obs_read;
     delete[] init_read;
     delete[] transmission_read;
     delete[] emission_read;
 }
-
-
-
-
 
 
 //-----------------------------
@@ -112,25 +112,31 @@ void tb_viterbi::recv() {
         sc_stop();
         exit(-1);
     }
-
+    i = 0;
     wait();
-
     while (true)
     {
-        for (i = 0; i < N_OBS; i++) {
+        
+        while (i < N_OBS)
+        {
+            wait();
             viterbi_out_write[i] = viterbi_output[i].read();
+            std::cout << viterbi_out_write[i] << "\t";
+
+            out_viterbi_file << viterbi_out_write[i] << std::endl;
+            i++;
         }
 
-        for (i = 0; i < N_OBS; i++) {
-            out_viterbi_file << viterbi_out_write[i] << std::endl;
-        }
+        wait();
+
+     
 
         out_viterbi_file.close();
 
-        wait();
+        delete[] viterbi_out_write;
+      
     }
-
-    delete[] viterbi_out_write;
+    
 }
 
 
@@ -139,11 +145,15 @@ void tb_viterbi::recv() {
 //--------------------------------
 void tb_viterbi::compare_results() {
 
-    unsigned int outviterbi [N_OBS], outviterbi_golden[N_OBS];
+    int outviterbi [N_OBS], outviterbi_golden[N_OBS];
         int line = 1, errors = 0;
 
+     
+
     // Open results file
-        std::ifstream   outfile(OUT_FILE_NAME);
+        outfile.close();
+
+        outfile.open(OUT_FILE_NAME);
 
     if (!outfile) {
         cout << "Could not open " << OUT_FILE_NAME << endl;
@@ -190,34 +200,32 @@ void tb_viterbi::compare_results() {
     //    line++;
 
     //}
+    int w = 0;
+    while (w < N_OBS)
+    {
+        w++;
+        wait();
+    }
 
     diff_file.close();
 
     std::string data1;
 
-    int type = 0, i = 0;
+   int i = 0;
 
     while (!outfile.eof()) {
         outfile >> data1;
-
-        if (data1.c_str()[0] == '%') {
-            type++;
-            i = 0;
-        }
-
-        else {
-            if (type == 1 && i < N_OBS) {
                 outviterbi[i++] = std::stoi(data1);
-            }
+            
         }
-    }
+    
     outfile.close();
 
 
     
     std::string data2;
 
-    type = 0;
+    int type = 0;
     i = 0;
 
     while (!goldfile.eof()) {
@@ -237,7 +245,7 @@ void tb_viterbi::compare_results() {
     goldfile.close();
 
     for (i = 0; i < N_OBS; i++) {
-        if (outviterbi_golden != outviterbi) {
+        if (outviterbi_golden[i] != outviterbi[i]) {
         errors++;
     }
     }

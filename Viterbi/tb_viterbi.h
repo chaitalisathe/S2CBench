@@ -23,6 +23,10 @@ SC_MODULE(tb_viterbi) {
 	sc_in<sc_uint<8>> sanity_check;
 	
 	sc_in<sc_uint<8> > * viterbi_output;
+
+	std::ifstream   outfile;
+
+	bool start_cmp = false;
 	
 
 	// Outputs
