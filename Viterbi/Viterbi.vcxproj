@@ -148,11 +148,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="tb_viterbi.cpp" />
-    <ClCompile Include="viterbi.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="define.h" />
     <ClInclude Include="tb_viterbi.h" />
     <ClInclude Include="viterbi.h" />
@@ -160,6 +155,11 @@
   <ItemGroup>
     <None Include="check.data" />
     <None Include="input.data" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="tb_viterbi.cpp" />
+    <ClCompile Include="viterbi.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
