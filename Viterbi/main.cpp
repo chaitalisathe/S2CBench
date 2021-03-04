@@ -12,7 +12,7 @@
 int sc_main(int argc, char* argv[])
 {
 
-    std::cout << "Hello World" << std::endl;
+    std::cout << "S2C Bench Viterbi Algorithm" << std::endl;
   sc_clock *               clk = new sc_clock("clk", 25, SC_NS, 0.5, 12.5, SC_NS, true);
   sc_signal<bool> *       rst = new sc_signal<bool>();
 
