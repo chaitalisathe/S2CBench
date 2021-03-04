@@ -12,8 +12,9 @@
 void tb_viterbi::send() {
 
     // Variables declaration
-    int i, j = 0;
+    int i, m = 0, j = 0;
     unsigned int* obs_read = new unsigned int[N_OBS];
+    //unsigned int* obs_read = new unsigned int;
     float* init_read = new float[N_STATES];
     float* transmission_read = new float[N_STATES * N_STATES];
     float* emission_read = new float[N_STATES * N_TOKENS];
@@ -27,13 +28,13 @@ void tb_viterbi::send() {
         exit(-1);
     }
 
-    while (true) {
 
-        std::string data;
+    std::string data;
 
-        int type = 0;
+    int type = 0;
 
-
+    
+        // Reading all matrix and inputs
         while (!inFile.eof()) {
             inFile >> data;
 
@@ -45,48 +46,57 @@ void tb_viterbi::send() {
             else {
                 if (type == 1 && i < N_OBS) {
                     obs_read[i] = std::stoi(data);
-
-                    indata_obs[i].write(obs_read[i]);
                 }
 
                 if (type == 2 && i < N_STATES) {
-                    init_read[i] = std::stof(data);
-                    indata_init[i].write(init_read[i]);
+                    //init_read[i] = std::stof(data);
+                    indata_init[i].write(std::stof(data));
                 }
 
                 if (type == 3 && i < N_STATES * N_STATES) {
-                    transmission_read[i] = std::stof(data);
-                    indata_transition[i].write(transmission_read[i]);
+                    //transmission_read[i] = std::stof(data);
+                    indata_transition[i].write(std::stof(data));
                 }
 
                 if (type == 4 && i < N_STATES * N_TOKENS) {
-                    emission_read[i] = std::stof(data);
-                    indata_emission[i].write(emission_read[i]);
+                   // emission_read[i] = std::stof(data);
+                    indata_emission[i].write(std::stof(data));
                 }
 
                 i++;
-
             }
-          
-
         }
-        wait();
-        inFile.close();
 
-        
-        cout << endl << "Starting comparing results " << endl;
-
-        compare_results();
-
-
-
-        sc_stop();
         wait();
 
+        while (true) {
+            for (m = 0; m < N_OBS; m++) {
+                indata_obs.write(obs_read[m]);
+                wait();
+            }
+            inFile.close();
 
-    }
+            wait();
 
-   
+            cout << endl << "Starting comparing results " << endl;
+
+            compare_results();
+            
+            sc_stop();
+
+            wait();
+        }
+
+       
+
+        // writing inputs sequentially
+    //wait();
+    
+
+
+
+
+
 
     delete[] obs_read;
     delete[] init_read;
@@ -101,43 +111,32 @@ void tb_viterbi::send() {
 void tb_viterbi::recv() {
 
     // Variables declaration
-    unsigned int* viterbi_out_write= new unsigned int[N_OBS];
-    int i;
+    //unsigned int* viterbi_out_write= new unsigned int[N_OBS];
+    unsigned int viterbi_out_write;
+    int i = 0;
 
     //std::ifstream out_viterbi_file(OUT_FILE_NAME,"wt");
-    std::ofstream out_viterbi_file(OUT_FILE_NAME);
+    //std::ofstream out_viterbi_file(OUT_FILE_NAME);
+    out_viterbi_file = fopen(OUT_FILE_NAME, "wt");
 
     if (!out_viterbi_file) {
         cout << "Could not open " << OUT_FILE_NAME << "\n";
         sc_stop();
         exit(-1);
     }
-    i = 0;
+
     wait();
+
     while (true)
     {
-        
-        while (i < N_OBS)
-        {
-            wait();
-            viterbi_out_write[i] = viterbi_output[i].read();
-            std::cout << viterbi_out_write[i] << "\t";
-
-            out_viterbi_file << viterbi_out_write[i] << std::endl;
-            i++;
-        }
-
         wait();
-
-     
-
-        out_viterbi_file.close();
-
-        delete[] viterbi_out_write;
-      
+        viterbi_out_write = viterbi_output.read();
+        fprintf(out_viterbi_file, "%i\n", viterbi_out_write);
+        wait();
     }
-    
 }
+    
+
 
 
 //---------------------------------
@@ -145,17 +144,21 @@ void tb_viterbi::recv() {
 //--------------------------------
 void tb_viterbi::compare_results() {
 
-    int outviterbi [N_OBS], outviterbi_golden[N_OBS];
-        int line = 1, errors = 0;
+    int outviterbi, outviterbi_golden, line = 1, errors = 0;
 
-     
+    int i = 0;
+    while (i < N_OBS) {
+        i++;
+        wait();
+    }
+
+    // Close file where outputs are stored
+    fclose(out_viterbi_file);
 
     // Open results file
-        outfile.close();
+    out_viterbi_file = fopen(OUT_FILE_NAME, "rt");
 
-        outfile.open(OUT_FILE_NAME);
-
-    if (!outfile) {
+    if (!out_viterbi_file) {
         cout << "Could not open " << OUT_FILE_NAME << endl;
         sc_stop();
         exit(-1);
@@ -164,8 +167,9 @@ void tb_viterbi::compare_results() {
     //
     //Load the golden output from file
     //
-    std::ifstream  goldfile(OUT_FILE_NAME_GOLDEN);
-    if (!goldfile) {
+    //out_filter_golden_file.open(OUTFILENAME_GOLDEN);
+    out_viterbi_golden_file = fopen(OUT_FILE_NAME_GOLDEN, "rt");
+    if (!out_viterbi_golden_file) {
         cout << "Could not open " << OUT_FILE_NAME_GOLDEN << endl;
         sc_stop();
         exit(-1);
@@ -175,32 +179,39 @@ void tb_viterbi::compare_results() {
     // comparison result with golden output
     //
 
-    std::ofstream diff_file (DIFF_FILE_NAME);
-    if(!diff_file) {
+    diff_file = fopen(DIFF_FILE_NAME, "w");
+    if (!diff_file) {
         cout << "Could not open " << DIFF_FILE_NAME << "\n";
         sc_stop();
         exit(-1);
     }
 
-    //while (fscanf(out_viterbi_golden_file, "%i", &outviterbi_golden) != EOF) {
-    //    fscanf(out_viterbi_file, "%i", &outviterbi);
+    //      while(out_filter_golden_file.eof()){
+    while (fscanf(out_viterbi_golden_file, "%d", &outviterbi_golden) != EOF) {
+        fscanf(out_viterbi_file, "%d", &outviterbi);
+        cout << endl << "Cycle[" << line << "]: " << outviterbi_golden << "-- " << outviterbi;
 
+        // out_filter_file_read >> outfilter;
+        // out_filter_golden_file >> outfilter_golden;
+        if (outviterbi != outviterbi_golden) {
+            cout << "\nOutput missmatch [line:" << line << "] Golden:" << outviterbi_golden << " -- Output:" << outviterbi;
 
-    //   // cout << endl << "Cycle[" << line << "]: " << outviterbi_golden << "-- " << outviterbi;
+            fprintf(diff_file, "\nOutput missmatch[line:%d] Golden: %d -- Output: %d", line, outviterbi_golden, outviterbi);
+            errors++;
+        }
+        line++;
 
+    }
 
-    //    if (outviterbi != outviterbi_golden) {
-    //        cout << "\nOutput missmatch [line:" << line << "] Golden:" << outviterbi_golden << " -- Output:" << outviterbi;
+    if (errors == 0)
+        cout << endl << "Finished simulation SUCCESSFULLY" << endl;
+    else
+        cout << endl << "Finished simulation " << errors << " MISSMATCHES between Golden and Simulation" << endl;
 
-    //        fprintf(diff_file, "\nOutput missmatch[line:%i] Golden: %i -- Output: %i", line, outviterbi_golden, outviterbi);
-
-    //        errors++;
-    //    }
-
-    //    line++;
-
-    //}
-    int w = 0;
+    fclose(out_viterbi_file);
+    fclose(diff_file);
+    fclose(out_viterbi_golden_file);
+    /*int w = 0;
     while (w < N_OBS)
     {
         w++;
@@ -216,13 +227,13 @@ void tb_viterbi::compare_results() {
     while (!outfile.eof()) {
         outfile >> data1;
                 outviterbi[i++] = std::stoi(data1);
-            
+
         }
-    
+
     outfile.close();
 
 
-    
+
     std::string data2;
 
     int type = 0;
@@ -248,11 +259,11 @@ void tb_viterbi::compare_results() {
         if (outviterbi_golden[i] != outviterbi[i]) {
         errors++;
     }
-    }
-
-    if (errors == 0)
-        cout << endl << "Finished simulation SUCCESSFULLY" << endl;
-    else
-        cout << endl << "Finished simulation " << errors << " MISSMATCHES between Golden and Simulation" << endl;
+    }*/
+    //
+    //    if (errors == 0)
+    //        cout << endl << "Finished simulation SUCCESSFULLY" << endl;
+    //    else
+    //        cout << endl << "Finished simulation " << errors << " MISSMATCHES between Golden and Simulation" << endl;
 }
 

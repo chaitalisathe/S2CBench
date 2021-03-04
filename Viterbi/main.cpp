@@ -17,16 +17,18 @@ int sc_main(int argc, char* argv[])
   sc_signal<bool> *       rst = new sc_signal<bool>();
 
   // Inputs to viterbi algorithm
-  sc_signal<sc_uint<8>>* indata_obs = new sc_signal<sc_uint<8>>[N_OBS]; // observation vector 
+ // sc_signal<sc_uint<8>>* indata_obs = new sc_signal<sc_uint<8>>[N_OBS]; // observation vector 
+  sc_signal<sc_uint<8>> indata_obs;
   sc_signal<float>* indata_init = new sc_signal<float>[N_STATES];
   sc_signal<float>* indata_transition = new sc_signal<float>[N_STATES * N_STATES];// transition matrix
   sc_signal<float>*		indata_emission = new sc_signal<float>[N_STATES*N_TOKENS];// emission matrix
 	
   // output  
-  sc_signal<sc_uint<8>>*  viterbi_output = new sc_signal<sc_uint<8>>[N_OBS]; // most likely state chain
+  //sc_signal<sc_uint<8>>*  viterbi_output = new sc_signal<sc_uint<8>>[N_OBS]; // most likely state chain
+  sc_signal<sc_uint<8>> viterbi_output;
   int i, j;
 
-  sc_signal<sc_uint<8>> sanity_check;
+  //sc_signal<sc_uint<8>> sanity_check;
 
   viterbi * u_viterbi = new viterbi("viterbi");
   tb_viterbi * test = new tb_viterbi("tb_viterbi");
@@ -35,12 +37,13 @@ int sc_main(int argc, char* argv[])
   u_viterbi->clk(*clk);
   u_viterbi->rst(*rst);
 
-  u_viterbi->sanity_check(sanity_check);
-  test->sanity_check(sanity_check);
+  //u_viterbi->sanity_check(sanity_check);
+  //test->sanity_check(sanity_check);
 
-  for (i = 0; i < N_OBS; i++) {
-      u_viterbi->indata_obs[i](indata_obs[i]);
-  }
+  //for (i = 0; i < N_OBS; i++) {
+  //    u_viterbi->indata_obs[i](indata_obs[i]);
+  //}
+  u_viterbi->indata_obs(indata_obs);
 
   for (i = 0; i < N_STATES; i++) {
       u_viterbi->indata_init[i](indata_init[i]);
@@ -59,17 +62,19 @@ int sc_main(int argc, char* argv[])
       }
   }
 
-  for (i = 0; i < N_OBS; i++) {
+  /*for (i = 0; i < N_OBS; i++) {
       u_viterbi->viterbi_output[i](viterbi_output[i]);
-  }
+  }*/
+  u_viterbi->viterbi_output(viterbi_output);
 
   // connect to test bench
   test->clk( *clk );
   test->rst( *rst );
     
-      for (i = 0; i < N_OBS; i++) {
+     /* for (i = 0; i < N_OBS; i++) {
           test->indata_obs[i](indata_obs[i]);
-      }
+      }*/
+  test->indata_obs(indata_obs);
 
   for (i = 0; i < N_STATES; i++) {
       test->indata_init[i](indata_init[i]);
@@ -88,9 +93,10 @@ int sc_main(int argc, char* argv[])
       }
   }
 
-      for (i = 0; i < N_OBS; i++) {
+     /* for (i = 0; i < N_OBS; i++) {
           test->viterbi_output[i](viterbi_output[i]);
-      }
+      }*/
+  test->viterbi_output(viterbi_output);
 
 
 
@@ -127,8 +133,10 @@ int sc_main(int argc, char* argv[])
    delete[] indata_emission;
    delete[] indata_transition;
    delete[] indata_init;
-   delete[] indata_obs;
-   delete[] viterbi_output;
+  // delete[] indata_obs;
+   //delete indata_obs;
+  // delete[] viterbi_output;
+   //delete viterbi_output;
 
     return 0;
 
